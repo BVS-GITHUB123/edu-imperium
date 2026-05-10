@@ -7,6 +7,7 @@ services:
     name: eduimperium-backend
     runtime: python
     rootDir: backend                      # repo subfolder that contains manage.py
+    pythonVersion: "3.11.9"               # Pin Python version (avoids Python 3.14 breaking psycopg2)
     buildCommand: >
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
@@ -28,8 +29,6 @@ services:
         fromDatabase:
           name: eduimperium-db
           property: connectionString
-      - key: PYTHON_VERSION
-        value: "3.11.0"
 
   # ─────────────────────────────────────────────────────────────────────────────
   # React Frontend — Render Static Site
