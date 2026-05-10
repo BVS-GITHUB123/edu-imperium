@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Create a superuser from DJANGO_SUPERUSER_* env vars (idempotent — skips if user exists)."
+    help = "Create or update the superuser from DJANGO_SUPERUSER_* env vars (always syncs password)."
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
@@ -21,13 +21,19 @@ class Command(BaseCommand):
             )
             return
 
-        if User.objects.filter(username=username).exists():
-            self.stdout.write(
-                self.style.SUCCESS(f"Superuser '{username}' already exists — skipping.")
-            )
-            return
-
-        User.objects.create_superuser(username=username, email=email, password=password)
-        self.stdout.write(
-            self.style.SUCCESS(f"✅ Superuser '{username}' created successfully.")
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"email": email, "is_staff": True, "is_superuser": True},
         )
+
+        # Always sync the password so env-var changes take effect on redeploy
+        user.set_password(password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.email = email
+        user.save()
+
+        if created:
+            self.stdout.write(self.style.SUCCESS(f"✅ Superuser '{username}' created."))
+        else:
+            self.stdout.write(self.style.SUCCESS(f"✅ Superuser '{username}' password updated."))
