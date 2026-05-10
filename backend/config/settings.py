@@ -80,11 +80,13 @@ TEMPLATES = [
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 # On Render, DATABASE_URL is set automatically when a PostgreSQL database is linked.
+# Note: Render's DATABASE_URL already includes sslmode=require — no extra flag needed.
+_db_url = os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=_db_url,
         conn_max_age=600,
-        ssl_require=not DEBUG,  # Require SSL in production
+        conn_health_checks=True,
     )
 }
 
